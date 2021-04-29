@@ -2,10 +2,11 @@
 Description=Docker Application Container Engine
 Documentation=https://docs.docker.com
 <% if @docker_socket.nil? %>
-After=network-online.target firewalld.service
+After=network-online.target firewalld.service containerd.service
+Requires=containerd.service
 <% else %>
-After=network-online.target <%= @docker_name %>.socket firewalld.service
-Requires=<%= @docker_name %>.socket
+After=network-online.target <%= @docker_name %>.socket firewalld.service containerd.service
+Requires=<%= @docker_name %>.socket containerd.service
 <% end %>
 Wants=network-online.target
 
@@ -14,11 +15,12 @@ Type=notify
 # the default is not to use systemd for cgroups because the delegate issues still
 # exists and systemd currently does not support the cgroup feature set required
 # for containers run by docker
-ExecStart=/usr/bin/dockerd -H fd://
+ExecStart=/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
 ExecReload=/bin/kill -s HUP $MAINPID
-LimitNOFILE=1048576
+
 # Having non-zero Limit*s causes performance problems due to accounting overhead
 # in the kernel. We recommend using cgroups to do container-local accounting.
+LimitNOFILE=infinity
 LimitNPROC=infinity
 LimitCORE=infinity
 # Uncomment TasksMax if your systemd version supports it.

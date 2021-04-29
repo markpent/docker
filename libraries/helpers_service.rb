@@ -147,8 +147,16 @@ module DockerCookbook
         end
       end
 
+      def containerd_daemon_opts
+        if docker_containerd
+          ['--containerd=/run/containerd/containerd.sock'].join(' ')
+        else
+          []
+        end
+      end
+
       def docker_daemon_cmd
-        [dockerd_bin, docker_daemon_arg, docker_daemon_opts].join(' ')
+        [dockerd_bin, docker_daemon_arg, docker_daemon_opts, containerd_daemon_opts].flatten.join(' ')
       end
 
       def docker_cmd
@@ -234,6 +242,11 @@ module DockerCookbook
         return true if o.stdout =~ /CONTAINER/
         false
       end
+
+      def docker_containerd
+        ::File.exist?('/usr/bin/containerd')
+      end
+      
     end unless defined?(DockerCookbook::DockerHelpers::Service)
   end
 end
